@@ -849,7 +849,7 @@ recommend_collab(df_cb['product_name'].iloc[0])
 Rekomendasi ini adalah produk yang sering disukai bersama oleh pengguna lain yang menyukai produk input. Cocok untuk menangkap behavioral pattern, bukan kemiripan konten.
 """
 
-# Contoh penggunaan untuk CB (Content-Based)
+# Contoh penggunaan untuk CF (Collaborative Filtering)
 recommend_collab("Avène Gentle Milk Cleanser")
 
 """Pada cell code tersebut, Fungsi ini memanggil Collaborative Filtering untuk merekomendasikan produk berdasarkan produk input: "Avène Gentle Milk Cleanser". Model mencari produk lain yang sering disukai bersama oleh pengguna yang juga menyukai produk ini. Dengan menggunakan algoritma KNN (K-Nearest Neighbors) pada data interaksi user.
