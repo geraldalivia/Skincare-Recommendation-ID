@@ -244,42 +244,178 @@ Pada tahap Evaluation dibedakan tahapannya berdasarkan kedual model yaitu evalua
 
 #### Berikut merupakan ringkasan evaluasi model CB
 
-**Rangkuman Cara Kerja Metrik:**
-
-| Metrik                | Fokus Evaluasi                | Cocok Untuk                                 |
-| --------------------- | ----------------------------- | ------------------------------------------- |
-| Cosine Similarity Avg | Seberapa mirip dari konten    | Mengecek logika dasar kemiripan ingredients |
-| Precision\@K          | Ketepatan rekomendasi         | Apakah yang direkomendasikan benar relevan  |
-| Recall\@K             | Cakupan rekomendasi           | Apakah semua produk relevan ditemukan       |
-| F1\@K                 | Keseimbangan presisi & recall | Evaluasi umum performa                      |
-| MAP\@K                | Urutan produk relevan         | Evaluasi kualitas ranking/top list          |
-
 **Hasil Evaluasi:**
 
-| Metrik        | Nilai  | Interpretasi                                                             |
-| ------------- | ------ | ------------------------------------------------------------------------ |
-| Precision\@10 | 0.035  | Hanya 3.5% produk rekomendasi yang benar-benar sejenis                   |
-| Recall\@10    | 0.035  | Hanya 3.5% produk sejenis yang berhasil direkomendasikan                 |
-| F1\@10        | 0.035  | Model kurang baik dalam hal akurasi maupun cakupan                       |
-| MAP\@10       | 0.0155 | Produk relevan cenderung muncul di posisi bawah dalam daftar rekomendasi |
+| Metrik                | Fokus Evaluasi                | Nilai  | Interpretasi                                                             |
+| --------------------- | ----------------------------- | ------ | ------------------------------------------------------------------------ |
+| Cosine Similarity Avg | Seberapa mirip dari konten    | 0.783  | Hanya 7.8% produk rekomendasi yang inline dengan sejenis                 |
+| Precision\@K          | Ketepatan rekomendasi         | 0.035  | Hanya 3.5% produk rekomendasi yang benar-benar sejenis                   |
+| Recall\@K             | Cakupan rekomendasi           | 0.035  | Hanya 3.5% produk sejenis yang berhasil direkomendasikan                 |
+| F1\@K                 | Keseimbangan presisi & recall | 0.035  | Model kurang baik dalam hal akurasi maupun cakupan                       |
+| MAP\@K                | Urutan produk relevan         | 0.0155 | Produk relevan cenderung muncul di posisi bawah dalam daftar rekomendasi |
 
 
 
 ### 🏷️ Evaluasi Model Content-Based Filtering (CB)
 
+1. Precision <br>
+   `def precision_at_k(user_id, top_k=10):` <br>
+   Cara Kerja: <br>
+   - Ambil 10 produk teratas yang disukai user (actual_products) <br>
+   - Rekomendasikan produk berdasarkan produk-produk tersebut <br>
+   - Hitung berapa banyak dari hasil rekomendasi yang memang relevan <br>
+   Formula: <br>
+   ```
+               Jumlah produk relevan di rekomendasi
+   Precision = -------------------------------------
+                     total rekomendasi (K)
+   ```
+   
+   Tujuan :  Mengukur akurasi rekomendasi seberapa "tepat sasaran". <br>
+   
+2. Recall@K  <br>
+   `def recall_at_k(user_id, top_k=10):`  <br>
+   Cara Kerja:  <br>
+   - Sama seperti precision, tapi fokusnya seperti formula ini:  <br>
+     ```
+                Jumlah produk relevan yang berhasil ditemukan
+     Recall = -------------------------------------------------
+                        jumlah produk relevan total
+     ```
+     
+     Tujuan : Mengukur kelengkapan seberapa banyak produk relevan yang berhasil direkomendasikan. <br>
+
+3. F1@K  <br>
+   `def f1_at_k(user_id, top_k=10):`  <br>
+   Cara Kerja:  <br>
+   Kombinasi precision dan recall  <br>
+   Formula:  <br>
+   ```
+   F1 = 2 * (precision * recall) / (precision + recall)
+   ```
+   
+   Tujuan: Memberi keseimbangan antara ketepatan (precision) dan kelengkapan (recall).  <br>
+
+
+4. MAP@K <br>
+   `def average_precision_at_k(actual, predicted, k=10)` <br>
+   `def mean_average_precision_at_k(users, k=10)` <br>
+   Cara Kerja: <br>
+   - Hitung precision tiap kali ada produk yang benar muncul <br>
+   - Rata-rata dari precision posisi-posisi tersebut adalah `average_precision_at_k` <br>
+   - Rata-rata dari seluruh user adalah `mean_average_precision_at_k` 
+   
+   Tujuan 
+   - Evaluasi urutan rekomendasi, bukan cuma keberadaannya. <br>
+   - Lebih sensitif terhadap posisi produk relevan dalam list rekomendasi. <br>
+
+
+#### Berikut merupakan ringkasan evaluasi model CF
+
+**Hasil Evaluasi:**
+
+| **Metrik**        | **Cara Kerja Singkat**                                                                                                               | **Interpretasi Hasil (Top-10)**                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| **Precision\@10** | - Ambil 10 produk top user<br>- Rekomendasikan produk mirip<br>- Hitung proporsi rekomendasi yang relevan (ada di top-10 user)       | **0.824** → 82.4% produk yang direkomendasikan **memang relevan** bagi user       |
+| **Recall\@10**    | - Ambil 10 produk top user<br>- Cek berapa dari produk itu yang berhasil muncul di rekomendasi                                       | **0.968** → Hampir **semua produk relevan berhasil ditemukan** di rekomendasi     |
+| **F1\@10**        | - Gabungan harmonic mean antara precision dan recall                                                                                 | **0.880** → Menunjukkan **keseimbangan sangat baik** antara relevansi dan cakupan |
+| **MAP\@10**       | - Hitung precision setiap kali produk benar muncul<br>- Rata-rata posisi yang benar di prediksi<br>- Rata-rata hasil dari semua user | **0.537** → Produk relevan cukup banyak muncul di posisi atas rekomendasi         |
 
 
 ---
 
 ## Visualisasi
 
+🖇️ **Gabungan Metrik Evaluasi Kedua Model (CB dan CF)**
 
+![Gambar 1](https://drive.google.com/uc?id=1UNeCZ0DvArb3SxpMykCYbwV7LlJTNoqR)
+
+**Insight: Gabungan Metrik Evaluasi Kedua Model (CB dan CF)**
+- CF (Collaborative Filter) > CB (Content Based) <br>
+  CF secara signifikan lebih unggul dibanding CB di semua metrik evaluasi (Precision, Recall, F1, MAP). <br>
+- Performa <br>
+  CF menunjukkan performa sangat tinggi, terutama pada Recall@10 (95.6%) dan F1@10 (88.4%), menandakan sistem mampu merekomendasikan banyak item relevan dan seimbang. <br>
+  CB memiliki performa sangat rendah dan stagnan di semua metrik (~3.5%), serta MAP@10 hanya 1.5%, menunjukkan rekomendasi kurang relevan dan tidak urut dengan baik. <br>
+
+
+🖇️ **Gabungan Metrik Evaluasi Model COntent-Based (CB)**
+
+![Gambar 2](https://drive.google.com/uc?id=13aJVuyi-Nfyr93dd2DZbDSE3x_i8DDD4)
+
+**Insight: Precision@10, Recall@10, F1@10 Untuk CB**
+Akurasi Total 90% produk memiliki skor evaluasi 0 yang menunjukkan sistem rekomendasi gagal memberikan rekomendasi berkualitas.
+- Hanya 5 produk atau sekitar 75% yang memiliki performa terukur dengan skor maksimal ~0.3.
+- Pada produk Sanctuary Spa Classic 12 Hour Shower Cream 250ml memiliki performa terbaik dari semua metrik.
+  
+Masalah yang Teridentifikasi:
+
+  - Data sparsity: kurangnya kesamaan ingredient antar produk
+  - Cold start problem: produk dengan karakteristik unik sulit direkomendasikan
+  - Over-specialization: content-based filtering terlalu bergantung pada ingredient similarity
+
+
+🖇️ **Gabungan Metrik Evaluasi Model Collaborative Filter (CF)**
+
+![Gambar 3](https://drive.google.com/uc?id=1lJTgWTL9kG4rlfaG-nkH5sF2pSjjkjLZ)
+
+**Insight: Precision@10, Recall@10, F1@10 Untuk CF**
+- Kinerja Umum Tinggi <br>
+  Mayoritas user memiliki skor di atas 0.8 untuk Precision, Recall, dan F1@10.
+- Recall Lebih Unggul <br>
+  Recall@10 umumnya lebih tinggi dari Precision karena mencakup lebih banyak item relevan.
+- Variasi Skor Meningkat <br>
+  Beberapa user menunjukkan penurunan Precision dan F1, meskipun Recall naik.
+- User Performa Rendah <br>
+  Ada user dengan skor Precision/F1 < 0.6, kemungkinan karena:
+  - Cold start (interaksi minim)
+  - Rekomendasi terlalu beragam dan tidak tepat sasaran
+
+Catatan & Rekomendasi
+- CF tetap efektif pada top@10, tapi ada trade-off antara Recall vs Precision.
+- Variasi skor makin tinggi saat k meningkat.
+- Perlu penyaringan tambahan untuk jaga precision saat k besar.
 
 ---
 
 ## Inferences
 
+1. Contoh penggunaan untuk CB (Content-Based)
+   ```
+   recommend_content(df_cb['product_name'].iloc[10])
 
+   Output
+   | Index | Product Name                                             | Product Type | Price (£) |
+   | ----- | -------------------------------------------------------- | ------------ | --------- |
+   | 10    | CeraVe Moisturising Cream 50ml                           | Moisturiser  | 4.0       |
+   | 11    | CeraVe Moisturising Cream 340g                           | Moisturiser  | 13.0      |
+   | 20    | CeraVe Moisturising Cream 177ml                          | Moisturiser  | 9.0       |
+   | 6     | CeraVe Facial Moisturising Lotion No SPF 52ml            | Moisturiser  | 13.0      |
+   | 5     | CeraVe Moisturising Lotion 473ml                         | Moisturiser  | 15.0      |
+   | 702   | CeraVe Hydrating Cleanser 473ml                          | Cleanser     | 15.0      |
+   | 701   | CeraVe Hydrating Cleanser 236ml                          | Cleanser     | 9.5       |
+   | 8     | CeraVe Smoothing Cream 177ml                             | Moisturiser  | 12.0      |
+   | 1     | CeraVe Facial Moisturising Lotion SPF 25 52ml            | Moisturiser  | 13.0      |
+   | 481   | Dear, Klairs Rich Moist Soothing Tencel Sheet Mask (1pc) | Mask         | 3.0       |
+   ```
+   Sistem Content-Based Filtering untuk merekomendasikan produk yang mirip secara komposisi bahan (ingredients) dengan produk pada baris ke-10 DataFrame df_cb, yaitu CeraVe Moisturising Cream 50ml.Menggunakan TF-IDF pada kolom clean_ingreds dan cosine similarity untuk mengukur kemiripan antar produk.
+
+2. Contoh penggunaan untuk CF (Collaborative Filtering)
+   ```
+   recommend_collab("Avène Gentle Milk Cleanser")
+
+   Output
+   ['MONU Firming Fiji Facial Oil (180ml)',
+    'REN Clean Skincare Clarimatte Clarifying Toner',
+    'VICHY LiftActiv Serum 10 Eyes & Lashes 15ml',
+    'Mavala Skin Vitality Beauty Enhancing Micro-Peel 65ml',
+    'Elemis Pro-Collagen Cleansing Balm 105g',
+    'Manuka Doctor ApiNourish Age-Defying Eye Cream 15ml',
+    'Bondi Sands Everyday Liquid Gold Gradual Tanning Oil 270ml',
+    'FARMACY Honey Potion Renewing Antioxidant Hydration Mask',
+    'Weleda Kids 2 in 1 Wash 150ml - Happy Orange',
+    'BARBER PRO Face Putty Black Peel-Off Mask with Activated Charcoal (3 Applications)']
+   ```
+    Fungsi tersebut memanggil Collaborative Filtering untuk merekomendasikan produk berdasarkan produk input: "Avène Gentle Milk Cleanser". Model mencari produk lain yang sering disukai bersama oleh pengguna yang juga menyukai produk ini. Dengan menggunakan algoritma KNN (K-Nearest Neighbors) pada data interaksi user.
 
 ---
 
