@@ -46,34 +46,79 @@ Proyek ini mengimplementasikan dua pendekatan sistem rekomendasi:
 1. **Content-Based Filtering (CBF)**  
    - Menggunakan TF-IDF dan cosine similarity berdasarkan kolom `ingredients`.
    - Membantu pengguna menemukan produk dengan komposisi bahan aktif yang serupa.
-   - Cocok untuk rekomendasi yang objektif dan transparan, tidak tergantung pada rating atau review.
+   - Ditujukan untuk rekomendasi yang tidak tergantung pada rating atau review.
 
 2. **Collaborative Filtering (CF)**  
    - Menggunakan matrix factorization dari library `implicit`.
    - Berdasarkan interaksi historis pengguna dengan produk (user-product interaction matrix).
-   - Memungkinkan rekomendasi bersifat personal dengan mempelajari pola preferensi pengguna.
+   - Ditujukan untuk rekomendasi yang bersifat personal dengan mempelajari pola preferensi pengguna.
      
 ---
 
 ## Data Understanding
-Paragraf awal bagian ini menjelaskan informasi mengenai jumlah data, kondisi data, dan informasi mengenai data yang digunakan. Sertakan juga sumber atau tautan untuk mengunduh dataset. Contoh: [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Restaurant+%26+consumer+data).
 
-Selanjutnya, uraikanlah seluruh variabel atau fitur pada data. Sebagai contoh:  
+Dataset yang digunakan adalah `skincare_products_clean.csv`. Kumpulan data tersebut terdiri dari nama produk, url produk, jenis produk (seperti pelembap, serum, dsb.), bahan-bahan (ingridients), dan harga. Dataset tersebut terdiri dari 1138 baris dan 5 kolom. Dataset ini sudah dibersihkan oleh pemilik dataset, dimana pada bagian bahan-bahan (ingridients) dibersihkan sehingga variasi nama bahan telah dihilangkan dan diberikan satu nama untuk setiap bahan. 
 
-Variabel-variabel pada Restaurant UCI dataset adalah sebagai berikut:
-- accepts : merupakan jenis pembayaran yang diterima pada restoran tertentu.
-- cuisine : merupakan jenis masakan yang disajikan pada restoran.
-- dst
+Fitur:
+- `product_name` : menunjukkan nama produk
+- `product_url` : menunjukkan tautan belanja produk secara online
+- `product_type` : menunjukkan kategori produk (misal Moisturiser, Bath Oil, dll)
+- `clean_ingreds` : menunjukan bahan-bahan yang terkandung dalam produk
+- `price` : menunjukkan harga produk 
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
-- Melakukan beberapa tahapan yang diperlukan untuk memahami data, contohnya teknik visualisasi data beserta insight atau exploratory data analysis.
+EDA (Exploratory Data Analysis) telah dilakukan untuk melihat beberapa informasi berikut:
+- Pengecekan nilai yang hilang.
+- Pengecekan nilai duplikat.
+- Distribusi tipe produk
+- Distribusi top 10 brand dengan produk terbanyak
+- Menampilkan 14 produk termurah dan termahal
+- Menampilkan distribusi proporsi tipe produk menggunakan pie chart
+
+**Insight:**
+- Dataset ini terdiri atas 1138 baris dan 5 kolom.
+- Tidak adanya nilai yang hilang (no missing value) dan tidak ada data yang terduplikasi (no duplicated value).
+- Berdasarkan distribusi tipe data, produk skincare paling banyak adalah Mask, Body Wash, dan Moisturiser. Sedangkan. produk paling jarang adalah Bath Oil, Bath Salts, dan Peel.
+- Berdasarkan top10 brand dengan produk terbanyak diduduki oleh brand Clinique, disusul oleh La Roche-Posay, The Ordinary, dan Garnier.
+- Pada dataset, produk termurah di setiap kategori didominasi oleh brand-brand dengan harga sangat terjangkau seperti Holika Holika (Mask: £1.95) dan Westlab (Body Wash: £1.99). Sedangkan, produk termahal berasal dari brand premium seperti Elemis, Chantecaille, dan Medik8, dengan harga hingga £99.00 (Moisturiser) dan £96.00 (Serum).
+- Proporsi distribusi tipe produk berdasarkan kategori Mask, Body Wash, dan Cleanser mendominasi total produk dengan persentase terbesar (>10%). Sedangkan, kategori seperti Peel, Bath Oil, dan Bath Salts memiliki jumlah produk paling sedikit (<3.5%).
+
+Sumber dataset : [Skincare Products Dataset](https://www.kaggle.com/datasets/eward96/skincare-products-clean-dataset)
+
+---
 
 ## Data Preparation
-Pada bagian ini Anda menerapkan dan menyebutkan teknik data preparation yang dilakukan. Teknik yang digunakan pada notebook dan laporan harus berurutan.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan proses data preparation yang dilakukan
-- Menjelaskan alasan mengapa diperlukan tahapan data preparation tersebut.
+Pada data preparation dilakukan 2 pendekatan yang digunakan. Pendekatan tersebut untuk persiapan data dalam membangun model content based dan collaborative filter.
+
+**Langkah-langkah untuk Content Based (CB):**
+
+1. Menyalin dataframe utama ke variabel `df_cb`.
+2. Membersihkan teks pada kolom `clean_ingreds`. Dengan mengubah semua huruf menjadi huruf kecil (lowercase) dan menghapus karakter non-huruf (simbol, angka).
+3. Mengonversi kolom `price` dari string ke numerik. Menghapus simbol £ dan mengubah ke floa.
+4. Menghapus missing value di kolom `clean_ingreds`
+
+📌 **Alasan langkah-langkah CB tersebut dilakukan:**
+
+- Salinan  `df_cb` agar proses pembersihan data tidak memengaruhi dataset utama.
+- Pembersihan pada kolom `clean_ingreds` agar konsisten saat vektorisasi dan menghindari noise saat perhitungan TF-IDF.
+- Mengkonversi tipe data `price` dari string ke numerik agar harga bisa digunakan dalam analisis agar memastikan tipe data numerik yang valid.
+- Hapus missing value pada kolom `clean_ingreds` untuk menghindari error saat membuat TF-IDF vectorizer menjaga kualitas data agar hanya produk dengan deskripsi bahan yang tersedia yang masuk ke model.
+
+**Langkah-langkah untuk Collaborative Filter (CF):**
+1. Membuat 200 pengguna dummy (user_1 hingga user_200).
+2. Mengenerate interaksi acak (produk + rating) untuk tiap user.
+3. Menyimpan data interaksi ke dalam DataFrame `df_interactions`.
+4. Mengubah data menjadi `user-item matrix`.
+5. Mengubah matrix menjadi sparse matrix (csr_matrix)
+
+📌 **Alasan langkah-langkah CB tersebut dilakukan:**
+- Karema dataset asli tidak mengandung data interaksi pengguna, maka dibuat data simulatif untuk memungkinkan training model CF.
+- Membuat skenario realistis untuk collaborative filtering. Dimana setiap pengguna memberikan rating terhadap 5–15 produk acak. Rating dibuat antara 3 sampai 5 untuk mensimulasikan pengalaman positif (interaksi pengguna).
+- Hasil data interaksi disimpan ke dataframe `df_interactions` dengan struktur data `user-item-rating` dibutuhkan sebagai input model CF nantinya.
+- Pada `user-item matrix` berisikan 3 kolom yang terdiri dari pengguna, produk, dan rating. Kolom ini diperlukan untuk representasi numerik dalam training model.
+- Mengubah matrik menjadi sparse matrix untuk menghemat memori dan mempercepat perhitungan saat training model CF dengan bantuan format dari library implicit.
+
+---
 
 ## Modeling
 Tahapan ini membahas mengenai model sisten rekomendasi yang Anda buat untuk menyelesaikan permasalahan. Sajikan top-N recommendation sebagai output.
