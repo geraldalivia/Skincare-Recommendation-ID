@@ -122,7 +122,7 @@ Pada data preparation dilakukan 2 pendekatan yang digunakan. Pendekatan tersebut
 
 ## Modeling
 
-🔍**MODELING : Content-Based Filtering (CB)**
+### 🔍**MODELING : Content-Based Filtering (CB)**
 
 Cara kerja model ini: <br>
 1. Vektorisasi ingredients menggunakan TF-IDF
@@ -160,8 +160,7 @@ Cara kerja model ini: <br>
 - Rentan terhadap cold start pada informasi produk (jika ingredients tidak lengkap).
 
 
-🔍**MODELING : Collaborative Filtering (CF)**
-
+### 🔍**MODELING : Collaborative Filtering (CF)**
 
 Cara kerja model ini: <br>
 1. Inisialisasi dan pelatihan model KNN
@@ -193,15 +192,95 @@ Cara kerja model ini: <br>
 ---
 
 ## Evaluation
-Pada bagian ini Anda perlu menyebutkan metrik evaluasi yang digunakan. Kemudian, jelaskan hasil proyek berdasarkan metrik evaluasi tersebut.
 
-Ingatlah, metrik evaluasi yang digunakan harus sesuai dengan konteks data, problem statement, dan solusi yang diinginkan.
+Pada tahap Evaluation dibedakan tahapannya berdasarkan kedual model yaitu evaluasi untuk CB dan evaluasi CF.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan formula metrik dan bagaimana metrik tersebut bekerja.
+### 🏷️ Evaluasi Model Content-Based Filtering (CB)
 
-**---Ini adalah bagian akhir laporan---**
+1. Evaluasi cosine similarity
+   `evaluate_cb()` <br>
+   Hal yang diukur: Rata-rata cosine similarity antar produk.<br>
+   Cara kerja: 
+     - Ambil top-N produk yang paling mirip (berdasarkan TF-IDF ingredients).
+     - Hitung rata-rata skor kemiripan.
+   
+   Kelebihan: Cepat dan langsung mengukur seberapa "mirip" produk secara konten. <br>
+   Kekurangan: Tidak mengevaluasi apakah produk itu benar-benar relevan untuk pengguna. <br>
 
-_Catatan:_
-- _Anda dapat menambahkan gambar, kode, atau tabel ke dalam laporan jika diperlukan. Temukan caranya pada contoh dokumen markdown di situs editor [Dillinger](https://dillinger.io/), [Github Guides: Mastering markdown](https://guides.github.com/features/mastering-markdown/), atau sumber lain di internet. Semangat!_
-- Jika terdapat penjelasan yang harus menyertakan code snippet, tuliskan dengan sewajarnya. Tidak perlu menuliskan keseluruhan kode project, cukup bagian yang ingin dijelaskan saja.
+2. Ground Truth Evaluation Metrics (Berbasis product_type)
+   `cb_precision_at_k_gt()` <br>
+   Hal yang diukur: Berapa banyak dari top-K rekomendasi yang benar-benar relevan (produk dengan product_type yang sama). <br>
+   Cara kerja:
+     - Ambil daftar ground truth produk sejenis.
+     - Bandingkan dengan hasil rekomendasi.
+   
+   Hitung: jumlah yang cocok / K. <br>
+
+3. Metrik Tambahan Evaluasi
+   - Precision@K <br>
+     `cb_recall_at_k_gt()` <br>
+     Hal yang diukur: Dari semua produk sejenis, berapa yang berhasil ditemukan oleh model. <br>
+     Cara kerja: Sama seperti precision, tapi menghitung: jumlah cocok / jumlah ground truth. <br>
+   - Recall@K <br>
+     `cb_f1_at_k_gt()` <br>
+     Hal yang diukur: Kombinasi seimbang antara Precision dan Recall. <br>
+     Formula: <br>
+     ```
+            Precision+Recall     
+     F1 = --------------------   
+            2×Precision×Recall   
+     ```
+     Tujuannya: mengukur keseimbangan antara akurasi dan kelengkapan rekomendasi. <br>
+     Kelebihan: Relevan jika ingin performa seimbang antara ketepatan & cakupan. <br>
+   - MAP@K <br>
+     `cb_map_at_k_gt()` dan `cb_average_precision_at_k_gt()` <br>
+     Hal yang diukur: Posisi produk relevan di dalam list rekomendasi. <br>
+     Cara kerja: <br>
+        - Setiap kali produk yang benar ditemukan, precision dihitung & diakumulasi. <br>
+        - Hasil akhirnya adalah Mean Average Precision dari banyak produk. <br>
+     
+     Kelebihan: Metrik yang sensitif terhadap urutan rekomendasi—jika produk relevan muncul di atas, skornya tinggi. <br>
+     Cocok untuk: Menilai apakah model meletakkan produk penting di posisi atas (Top-N relevan di awal). <br>
+
+#### Berikut merupakan ringkasan evaluasi model CB
+
+**Rangkuman Cara Kerja Metrik:**
+
+| Metrik                | Fokus Evaluasi                | Cocok Untuk                                 |
+| --------------------- | ----------------------------- | ------------------------------------------- |
+| Cosine Similarity Avg | Seberapa mirip dari konten    | Mengecek logika dasar kemiripan ingredients |
+| Precision\@K          | Ketepatan rekomendasi         | Apakah yang direkomendasikan benar relevan  |
+| Recall\@K             | Cakupan rekomendasi           | Apakah semua produk relevan ditemukan       |
+| F1\@K                 | Keseimbangan presisi & recall | Evaluasi umum performa                      |
+| MAP\@K                | Urutan produk relevan         | Evaluasi kualitas ranking/top list          |
+
+**Hasil Evaluasi:**
+
+| Metrik        | Nilai  | Interpretasi                                                             |
+| ------------- | ------ | ------------------------------------------------------------------------ |
+| Precision\@10 | 0.035  | Hanya 3.5% produk rekomendasi yang benar-benar sejenis                   |
+| Recall\@10    | 0.035  | Hanya 3.5% produk sejenis yang berhasil direkomendasikan                 |
+| F1\@10        | 0.035  | Model kurang baik dalam hal akurasi maupun cakupan                       |
+| MAP\@10       | 0.0155 | Produk relevan cenderung muncul di posisi bawah dalam daftar rekomendasi |
+
+
+
+### 🏷️ Evaluasi Model Content-Based Filtering (CB)
+
+
+
+---
+
+## Visualisasi
+
+
+
+---
+
+## Inferences
+
+
+
+---
+
+_Terima kasih telah membaca laporan proyek ini._
