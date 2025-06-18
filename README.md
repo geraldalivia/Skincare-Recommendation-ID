@@ -97,7 +97,7 @@ Pada data preparation dilakukan 2 pendekatan yang digunakan. Pendekatan tersebut
 3. Mengonversi kolom `price` dari string ke numerik. Menghapus simbol £ dan mengubah ke floa.
 4. Menghapus missing value di kolom `clean_ingreds`
 
-📌 **Alasan langkah-langkah CB tersebut dilakukan:**
+📌 **Alasan langkah-langkah Content Based tersebut dilakukan:**
 
 - Salinan  `df_cb` agar proses pembersihan data tidak memengaruhi dataset utama.
 - Pembersihan pada kolom `clean_ingreds` agar konsisten saat vektorisasi dan menghindari noise saat perhitungan TF-IDF.
@@ -111,7 +111,7 @@ Pada data preparation dilakukan 2 pendekatan yang digunakan. Pendekatan tersebut
 4. Mengubah data menjadi `user-item matrix`.
 5. Mengubah matrix menjadi sparse matrix (csr_matrix)
 
-📌 **Alasan langkah-langkah CB tersebut dilakukan:**
+📌 **Alasan langkah-langkah Collaborative Filter tersebut dilakukan:**
 - Karema dataset asli tidak mengandung data interaksi pengguna, maka dibuat data simulatif untuk memungkinkan training model CF.
 - Membuat skenario realistis untuk collaborative filtering. Dimana setiap pengguna memberikan rating terhadap 5–15 produk acak. Rating dibuat antara 3 sampai 5 untuk mensimulasikan pengalaman positif (interaksi pengguna).
 - Hasil data interaksi disimpan ke dataframe `df_interactions` dengan struktur data `user-item-rating` dibutuhkan sebagai input model CF nantinya.
@@ -121,11 +121,76 @@ Pada data preparation dilakukan 2 pendekatan yang digunakan. Pendekatan tersebut
 ---
 
 ## Modeling
-Tahapan ini membahas mengenai model sisten rekomendasi yang Anda buat untuk menyelesaikan permasalahan. Sajikan top-N recommendation sebagai output.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menyajikan dua solusi rekomendasi dengan algoritma yang berbeda.
-- Menjelaskan kelebihan dan kekurangan dari solusi/pendekatan yang dipilih.
+🔍**MODELING : Content-Based Filtering (CB)**
+
+Cara kerja model ini: <br>
+1. Vektorisasi ingredients menggunakan TF-IDF
+   ```
+   vectorizer = TfidfVectorizer(stop_words='english')
+   ingredient_matrix = vectorizer.fit_transform(df_cb['clean_ingreds'])
+   ```
+   Kalimat pada kolom `clean_ingreds` diubah menjadi vektor numerik menggunakan TF-IDF (Term Frequency - Inverse Document Frequency).
+
+   TF-IDF memberi bobot lebih besar pada kata-kata yang unik dalam satu produk, tapi jarang muncul di produk lain, sehingga efektif membedakan kandungan tiap produk.
+
+2. Hitung kemiripan antar produk
+   ```
+   cosine_sim = cosine_similarity(ingredient_matrix, ingredient_matrix)
+   ```
+   Kemiripan antar produk dihitung menggunakan cosine similarity, yaitu menghitung sudut antar vektor TF-IDF.
+
+3. Fungsi rekomendasi
+   ```
+   def recommend_content(product_name, top_n=10):
+   ...
+   ```
+   Fungsi akan mencari nama produk yang dimasukkan user.
+   Lalu mengambil produk dengan kemiripan tertinggi berdasarkan nilai cosine similarity.
+   Mengembalikan Top-N produk yang komposisi kandungannya paling mirip.
+
+✅ Kelebihan Content-Based Filtering:
+- Tidak membutuhkan data interaksi pengguna (berbasis deskripsi produk saja).
+- Bisa merekomendasikan produk baru selama punya deskripsi.
+- Objektif, karena berdasarkan konten nyata (ingredients), bukan ulasan subyektif.
+  
+❌ Kekurangan Content-Based Filtering:
+- Terbatas hanya pada kemiripan atribut produk, tidak mempertimbangkan pengalaman pengguna nyata.
+- Sulit untuk merekomendasikan produk yang berbeda namun relevan (tidak mirip secara konten tapi disukai oleh user serupa).
+- Rentan terhadap cold start pada informasi produk (jika ingredients tidak lengkap).
+
+
+🔍**MODELING : Collaborative Filtering (CF)**
+
+
+Cara kerja model ini: <br>
+1. Inisialisasi dan pelatihan model KNN
+   ```
+   model_knn = NearestNeighbors(metric='cosine', algorithm='brute')
+   model_knn.fit(sparse_matrix.T)
+   ```
+   Menggunakan K-Nearest Neighbors (KNN) berbasis cosine similarity.
+   Model dilatih pada sparse matrix transpos (sparse_matrix.T) agar sistem menghitung kemiripan antar produk, bukan antar pengguna.
+
+2. Fungsi rekomendasi berbasis interaksi
+   ```
+   def recommend_collab(product_name, top_n=10):
+   ...
+   ```
+   Fungsi mencari produk yang memiliki pola interaksi pengguna serupa.
+   Artinya, produk yang sering diberikan rating tinggi oleh pengguna yang sama dianggap "mirip".
+
+✅ Kelebihan Collaborative Filtering:
+- Mengandalkan pengalaman nyata pengguna, lebih sesuai dengan preferensi aktual.
+- Bisa menangkap korelasi tersembunyi antar produk yang tidak bisa dilihat hanya dari konten (misalnya dua produk berbeda tapi sering dibeli bersama).
+- Dinamis, menyesuaikan dengan perubahan pola perilaku pengguna.
+
+❌ Kekurangan Collaborative Filtering:
+- Rentan terhadap masalah cold start untuk produk baru (tidak ada interaksi → tidak bisa direkomendasikan).
+- Butuh data interaksi yang cukup besar dan representatif.
+- Jika data sparsity tinggi (banyak nilai kosong), performa bisa buruk.
+
+---
 
 ## Evaluation
 Pada bagian ini Anda perlu menyebutkan metrik evaluasi yang digunakan. Kemudian, jelaskan hasil proyek berdasarkan metrik evaluasi tersebut.
